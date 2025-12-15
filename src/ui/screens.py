@@ -138,6 +138,13 @@ class TextScreen(urwid.WidgetWrap):
             else:
                 self.app.show_message("No text selected to edit")
             return None
+        elif key == "v":
+            # Show vocabulary for current text
+            if self.current_text:
+                self.app.show_text_vocabulary(self.current_text)
+            else:
+                self.app.show_message("No text selected")
+            return None
         elif key == "esc":
             self.clear_selection()
             self.app.update_status()

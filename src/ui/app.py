@@ -312,6 +312,7 @@ Text View:
   t           Translate selected words
   p/P         Pronounce (normal/slow)
   i           Show detailed word info
+  v           Show text vocabulary
   n           Add new text (paste)
   e           Edit current text
   Esc         Clear selection
@@ -597,6 +598,74 @@ Press any key to close...
 
         self.loop.widget = overlay
         self.loop.unhandled_input = handle_input
+
+    def show_text_vocabulary(self, text):
+        """Show vocabulary list for a text with translations."""
+        from src.core.text_processor import TextProcessor
+
+        processor = TextProcessor()
+        # Get unique words, sorted alphabetically
+        words = sorted(set(processor.extract_words(text.content)))
+
+        if not words:
+            self.show_message("No words found in text")
+            return
+
+        # Build vocabulary list with translations and stages
+        known_words = self.vocabulary.get_known_words()
+        learning_words = self.vocabulary.get_learning_words()
+
+        lines = []
+        for word in words:
+            # Get translation
+            translation = self.lookup_translation(word)
+            trans_str = translation if translation else "?"
+
+            # Get stage
+            if word in known_words:
+                stage_mark = "[K]"
+            elif word in learning_words:
+                stage_mark = "[L]"
+            else:
+                stage_mark = "[N]"
+
+            lines.append(f"{stage_mark} {word} — {trans_str}")
+
+        # Summary
+        known_count = sum(1 for w in words if w in known_words)
+        learning_count = sum(1 for w in words if w in learning_words)
+        new_count = len(words) - known_count - learning_count
+
+        header = f"Words: {len(words)} total | Known: {known_count} | Learning: {learning_count} | New: {new_count}\n"
+        header += "─" * 50 + "\n\n"
+
+        content = header + "\n".join(lines)
+
+        # Display in scrollable overlay
+        text_widget = urwid.Text(content)
+        walker = urwid.SimpleFocusListWalker([text_widget])
+        listbox = urwid.ListBox(walker)
+        box = urwid.LineBox(listbox, title=f"Vocabulary: {text.title[:40]}")
+
+        overlay = urwid.Overlay(
+            box,
+            self.frame,
+            align="center",
+            width=("relative", 70),
+            valign="middle",
+            height=("relative", 80),
+        )
+
+        def close_vocab(key):
+            if key in ("q", "Q", "esc", "escape", "v"):
+                self.loop.widget = self.frame
+                self.loop.unhandled_input = self.handle_input
+                self.update_status()
+                return True
+            return False
+
+        self.loop.widget = overlay
+        self.loop.unhandled_input = close_vocab
 
     def run(self):
         """Run the application."""
