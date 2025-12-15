@@ -1,10 +1,25 @@
 """Text processing and Ukrainian tokenization."""
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Iterator
 
 from src.core.models import WordStage
+
+
+def strip_accents(text: str) -> str:
+    """Remove combining diacritical marks (stress accents) from text.
+
+    Ukrainian learning materials often include stress marks (combining acute accent)
+    like "ме́не" which should normalize to "мене" for word matching.
+    """
+    # Normalize to NFD (decomposed form) so combining marks are separate
+    normalized = unicodedata.normalize('NFD', text)
+    # Remove combining diacritical marks (category 'Mn' = Mark, Nonspacing)
+    stripped = ''.join(c for c in normalized if unicodedata.category(c) != 'Mn')
+    # Normalize back to NFC
+    return unicodedata.normalize('NFC', stripped)
 
 
 @dataclass
@@ -17,8 +32,8 @@ class Token:
 
     @property
     def normalized(self) -> str:
-        """Get normalized (lowercase) form for lookup."""
-        return self.text.lower()
+        """Get normalized (lowercase, accent-stripped) form for lookup."""
+        return strip_accents(self.text.lower())
 
 
 @dataclass
@@ -47,8 +62,9 @@ class TextProcessor:
 
     # Ukrainian word pattern - includes apostrophe (') and soft sign (ь)
     # Ukrainian alphabet: а-яіїєґ plus apostrophe within words
+    # Also includes combining diacritical marks (U+0300-U+036F) for stress accents
     WORD_PATTERN = re.compile(
-        r"[а-яіїєґА-ЯІЇЄҐ][а-яіїєґА-ЯІЇЄҐ'ʼ]*",
+        r"[а-яіїєґА-ЯІЇЄҐ][а-яіїєґА-ЯІЇЄҐ'ʼ\u0300-\u036f]*",
         re.UNICODE
     )
 
@@ -139,8 +155,8 @@ class TextProcessor:
         return AnnotatedText(original=text, tokens=annotated)
 
     def extract_words(self, text: str) -> list[str]:
-        """Extract just the words from text (lowercase)."""
-        return [m.group().lower() for m in self.WORD_PATTERN.finditer(text)]
+        """Extract just the words from text (lowercase, accent-stripped)."""
+        return [strip_accents(m.group().lower()) for m in self.WORD_PATTERN.finditer(text)]
 
     def count_words(self, text: str) -> int:
         """Count words in text."""

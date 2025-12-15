@@ -127,6 +127,17 @@ class TextScreen(urwid.WidgetWrap):
             # Show detailed info for selected/current word(s)
             self._show_word_info()
             return None
+        elif key == "n":
+            # Add new text (paste)
+            self.app.show_add_text_dialog()
+            return None
+        elif key == "e":
+            # Edit current text
+            if self.current_text:
+                self.app.show_edit_text_dialog(self.current_text)
+            else:
+                self.app.show_message("No text selected to edit")
+            return None
         elif key == "esc":
             self.clear_selection()
             self.app.update_status()

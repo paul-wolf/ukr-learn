@@ -8,7 +8,7 @@ from pathlib import Path
 from src.core.models import WordStage, Word, Text, WordList, WordEntry, GrammarNote
 
 # Text processor
-from src.core.text_processor import TextProcessor
+from src.core.text_processor import TextProcessor, strip_accents
 
 # Theme
 from src.ui.theme import get_stage_attr, get_cursor_attr
@@ -126,6 +126,51 @@ class TestTextProcessor:
         words = [t for t in tokens if t.is_word]
         assert words[0].stage == WordStage.NEW
         assert words[1].stage == WordStage.LEARNING
+
+    def test_tokenize_with_stress_accents(self):
+        # Ukrainian learning texts often have stress marks (combining acute accent)
+        # "ме́не" = "м" + "е" + combining acute + "н" + "е"
+        tokens = self.processor.tokenize("ме́не")
+        words = [t for t in tokens if t.is_word]
+        assert len(words) == 1
+        # Original text preserved
+        assert "е́" in words[0].text or len(words[0].text) >= 4
+        # Normalized form strips accents
+        assert words[0].normalized == "мене"
+
+    def test_extract_words_strips_accents(self):
+        # Text with stress marks should normalize properly
+        words = self.processor.extract_words("Ти ме́не чу́єш?")
+        assert "мене" in words
+        assert "чуєш" in words
+
+    def test_known_word_with_accent_matches(self):
+        # A word with accent marks should match known word without accents
+        known = {"мене"}
+        lines = list(self.processor.iter_lines_annotated("ме́не", known, set()))
+        tokens = lines[0]
+        words = [t for t in tokens if t.is_word]
+        assert len(words) == 1
+        assert words[0].stage == WordStage.KNOWN
+
+
+class TestStripAccents:
+    """Test accent stripping function."""
+
+    def test_strip_combining_acute(self):
+        # Combining acute accent U+0301
+        assert strip_accents("ме́не") == "мене"
+        assert strip_accents("чу́єш") == "чуєш"
+
+    def test_strip_preserves_regular_text(self):
+        # Text without accents unchanged
+        assert strip_accents("привіт") == "привіт"
+        assert strip_accents("слово") == "слово"
+
+    def test_strip_multiple_accents(self):
+        # Multiple words with accents
+        result = strip_accents("Ти ме́не чу́єш?")
+        assert result == "Ти мене чуєш?"
 
 
 class TestTheme:

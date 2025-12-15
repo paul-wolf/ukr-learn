@@ -312,6 +312,8 @@ Text View:
   t           Translate selected words
   p/P         Pronounce (normal/slow)
   i           Show detailed word info
+  n           Add new text (paste)
+  e           Edit current text
   Esc         Clear selection
 
 Word Lists:
@@ -398,6 +400,203 @@ Press any key to close...
 
         self.loop.widget = overlay
         self.loop.unhandled_input = close_info
+
+    def show_add_text_dialog(self):
+        """Show dialog to paste and add a new text."""
+        # Input fields
+        title_edit = urwid.Edit("Title: ")
+        content_edit = urwid.Edit("", multiline=True)
+        difficulty_text = urwid.Text("Difficulty: beginner")
+
+        difficulties = ["beginner", "intermediate", "advanced"]
+        current_difficulty = [0]  # Use list to allow mutation in nested function
+
+        def do_save(button=None):
+            title = title_edit.edit_text.strip()
+            content = content_edit.edit_text.strip()
+
+            if not title:
+                self.show_message("Title is required")
+                return
+
+            if not content:
+                self.show_message("Content is required")
+                return
+
+            # Create and save the text
+            from src.core.models import Text
+            text = Text.create(
+                title=title,
+                content=content,
+                difficulty=difficulties[current_difficulty[0]],
+                tags=["imported"],
+                source="pasted",
+            )
+            self.content.save_text(text)
+
+            # Close dialog and refresh
+            self.loop.widget = self.frame
+            self.loop.unhandled_input = self.handle_input
+            self.text_screen.refresh_list()
+            self.show_message(f"Added: {title}")
+
+        def do_cancel(button=None):
+            self.loop.widget = self.frame
+            self.loop.unhandled_input = self.handle_input
+            self.update_status()
+
+        def cycle_difficulty(button=None):
+            current_difficulty[0] = (current_difficulty[0] + 1) % len(difficulties)
+            difficulty_text.set_text(f"Difficulty: {difficulties[current_difficulty[0]]}")
+
+        # Buttons
+        save_btn = urwid.Button("Save", on_press=do_save)
+        cancel_btn = urwid.Button("Cancel", on_press=do_cancel)
+        diff_btn = urwid.Button("Cycle Difficulty", on_press=cycle_difficulty)
+
+        buttons = urwid.Columns([
+            urwid.AttrMap(save_btn, "button", focus_map="button_focus"),
+            urwid.AttrMap(diff_btn, "button", focus_map="button_focus"),
+            urwid.AttrMap(cancel_btn, "button", focus_map="button_focus"),
+        ], dividechars=2)
+
+        # Layout
+        pile = urwid.Pile([
+            urwid.Text("Paste Ukrainian text. Use Tab to move between fields.", align="center"),
+            urwid.Divider(),
+            urwid.Text("Title:"),
+            urwid.AttrMap(title_edit, "list_item_focus"),
+            urwid.Divider(),
+            difficulty_text,
+            urwid.Divider(),
+            urwid.Text("Content:"),
+            urwid.BoxAdapter(urwid.Filler(urwid.AttrMap(content_edit, "list_item_focus"), valign="top"), height=15),
+            urwid.Divider(),
+            buttons,
+        ])
+
+        box = urwid.LineBox(urwid.Padding(pile, left=1, right=1), title="Add New Text")
+
+        overlay = urwid.Overlay(
+            box,
+            self.frame,
+            align="center",
+            width=("relative", 85),
+            valign="middle",
+            height=("relative", 80),
+        )
+
+        def handle_input(key):
+            if key == "esc":
+                do_cancel()
+                return True
+            return False
+
+        self.loop.widget = overlay
+        self.loop.unhandled_input = handle_input
+
+    def show_edit_text_dialog(self, text):
+        """Show dialog to edit an existing text."""
+        from src.core.models import Text
+
+        # Input fields - pre-populated with existing data
+        title_edit = urwid.Edit("", text.title)
+        content_edit = urwid.Edit("", text.content, multiline=True)
+
+        difficulties = ["beginner", "intermediate", "advanced"]
+        try:
+            current_difficulty = [difficulties.index(text.difficulty)]
+        except ValueError:
+            current_difficulty = [0]
+
+        difficulty_text = urwid.Text(f"Difficulty: {difficulties[current_difficulty[0]]}")
+
+        def do_save(button=None):
+            title = title_edit.edit_text.strip()
+            content = content_edit.edit_text.strip()
+
+            if not title:
+                self.show_message("Title is required")
+                return
+
+            if not content:
+                self.show_message("Content is required")
+                return
+
+            # Update the text (preserve ID, created_at, source)
+            updated_text = Text(
+                id=text.id,
+                title=title,
+                content=content,
+                difficulty=difficulties[current_difficulty[0]],
+                tags=text.tags,
+                created_at=text.created_at,
+                source=text.source,
+            )
+            self.content.save_text(updated_text)
+
+            # Close dialog and refresh
+            self.loop.widget = self.frame
+            self.loop.unhandled_input = self.handle_input
+            self.text_screen.refresh_list()
+            # Re-select the text to show updated content
+            self.text_screen._on_text_select(text.id)
+            self.show_message(f"Updated: {title}")
+
+        def do_cancel(button=None):
+            self.loop.widget = self.frame
+            self.loop.unhandled_input = self.handle_input
+            self.update_status()
+
+        def cycle_difficulty(button=None):
+            current_difficulty[0] = (current_difficulty[0] + 1) % len(difficulties)
+            difficulty_text.set_text(f"Difficulty: {difficulties[current_difficulty[0]]}")
+
+        # Buttons
+        save_btn = urwid.Button("Save", on_press=do_save)
+        cancel_btn = urwid.Button("Cancel", on_press=do_cancel)
+        diff_btn = urwid.Button("Cycle Difficulty", on_press=cycle_difficulty)
+
+        buttons = urwid.Columns([
+            urwid.AttrMap(save_btn, "button", focus_map="button_focus"),
+            urwid.AttrMap(diff_btn, "button", focus_map="button_focus"),
+            urwid.AttrMap(cancel_btn, "button", focus_map="button_focus"),
+        ], dividechars=2)
+
+        # Layout
+        pile = urwid.Pile([
+            urwid.Text("Edit text. Paste to add content. Use Tab to move.", align="center"),
+            urwid.Divider(),
+            urwid.Text("Title:"),
+            urwid.AttrMap(title_edit, "list_item_focus"),
+            urwid.Divider(),
+            difficulty_text,
+            urwid.Divider(),
+            urwid.Text("Content:"),
+            urwid.BoxAdapter(urwid.Filler(urwid.AttrMap(content_edit, "list_item_focus"), valign="top"), height=15),
+            urwid.Divider(),
+            buttons,
+        ])
+
+        box = urwid.LineBox(urwid.Padding(pile, left=1, right=1), title=f"Edit: {text.title[:40]}")
+
+        overlay = urwid.Overlay(
+            box,
+            self.frame,
+            align="center",
+            width=("relative", 85),
+            valign="middle",
+            height=("relative", 80),
+        )
+
+        def handle_input(key):
+            if key == "esc":
+                do_cancel()
+                return True
+            return False
+
+        self.loop.widget = overlay
+        self.loop.unhandled_input = handle_input
 
     def run(self):
         """Run the application."""
