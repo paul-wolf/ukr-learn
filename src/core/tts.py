@@ -1,6 +1,5 @@
 """Text-to-Speech support for Ukrainian pronunciation."""
 
-import os
 import platform
 import subprocess
 import tempfile
@@ -32,11 +31,8 @@ class TextToSpeech:
     def is_available(self) -> bool:
         """Check if TTS is available."""
         if self._gtts_available is None:
-            try:
-                from gtts import gTTS
-                self._gtts_available = True
-            except ImportError:
-                self._gtts_available = False
+            import importlib.util
+            self._gtts_available = importlib.util.find_spec("gtts") is not None
         return self._gtts_available
 
     def speak(self, text: str) -> None:

@@ -39,6 +39,16 @@ class Database:
                     last_read TIMESTAMP NOT NULL,
                     times_read INTEGER NOT NULL DEFAULT 1
                 );
+
+                CREATE TABLE IF NOT EXISTS word_info_cache (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    lookup_key TEXT UNIQUE NOT NULL,
+                    info_type TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    created_at TIMESTAMP NOT NULL
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_word_info_key ON word_info_cache(lookup_key);
             """)
 
     @contextmanager
@@ -236,3 +246,43 @@ class Database:
             for row in rows:
                 stats[row["stage"]] = row["count"]
             return stats
+
+    # Word info cache operations
+
+    def get_word_info(self, word_or_phrase: str) -> Optional[str]:
+        """Get cached word/phrase info if available."""
+        lookup_key = word_or_phrase.lower().strip()
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT content FROM word_info_cache WHERE lookup_key = ?",
+                (lookup_key,)
+            ).fetchone()
+            if row:
+                return row["content"]
+            return None
+
+    def save_word_info(self, word_or_phrase: str, info_type: str, content: str) -> None:
+        """Cache word/phrase info.
+
+        Args:
+            word_or_phrase: The word or phrase (used as lookup key)
+            info_type: 'word' or 'phrase'
+            content: The detailed info content
+        """
+        lookup_key = word_or_phrase.lower().strip()
+        now = datetime.now()
+        with self._connection() as conn:
+            conn.execute("""
+                INSERT INTO word_info_cache (lookup_key, info_type, content, created_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(lookup_key) DO UPDATE SET
+                    info_type = excluded.info_type,
+                    content = excluded.content,
+                    created_at = excluded.created_at
+            """, (lookup_key, info_type, content, now))
+
+    def clear_word_info_cache(self) -> int:
+        """Clear all cached word info. Returns number of entries cleared."""
+        with self._connection() as conn:
+            cursor = conn.execute("DELETE FROM word_info_cache")
+            return cursor.rowcount

@@ -1,7 +1,5 @@
 """Content generator using AI providers."""
 
-import json
-import re
 from typing import Optional
 
 from src.ai.base import AIProvider
@@ -218,3 +216,87 @@ Provide:
 
         response = self.provider.generate(prompt, system=SYSTEM_PROMPT, max_tokens=50)
         return response.strip()
+
+    def get_word_info(self, word: str, context: Optional[str] = None) -> str:
+        """
+        Get detailed information about a Ukrainian word.
+
+        Args:
+            word: The Ukrainian word
+            context: Optional sentence context
+
+        Returns:
+            Detailed information formatted for display
+        """
+        context_text = ""
+        if context:
+            context_text = f'\nContext: "{context}"'
+
+        prompt = f"""Provide detailed information about this Ukrainian word: {word}{context_text}
+
+Format your response exactly like this:
+
+WORD: {word}
+PRONUNCIATION: [phonetic guide for English speakers]
+PART OF SPEECH: [noun/verb/adjective/etc.]
+GENDER: [for nouns: masculine/feminine/neuter, otherwise N/A]
+ASPECT: [for verbs: imperfective/perfective, otherwise N/A]
+
+DEFINITIONS:
+1. [primary meaning]
+2. [secondary meaning if any]
+
+EXAMPLES:
+• [Ukrainian sentence] — [English translation]
+• [Ukrainian sentence] — [English translation]
+
+RELATED WORDS:
+• [related word 1] — [translation]
+• [related word 2] — [translation]
+
+NOTES:
+[Any irregularities, common mistakes, or usage tips]"""
+
+        return self.provider.generate(prompt, system=SYSTEM_PROMPT, max_tokens=1500)
+
+    def get_phrase_info(self, phrase: str, context: Optional[str] = None) -> str:
+        """
+        Get detailed information about a Ukrainian phrase.
+
+        Args:
+            phrase: The Ukrainian phrase (multiple words)
+            context: Optional sentence context
+
+        Returns:
+            Detailed information formatted for display
+        """
+        context_text = ""
+        if context:
+            context_text = f'\nContext: "{context}"'
+
+        prompt = f"""Provide detailed information about this Ukrainian phrase: {phrase}{context_text}
+
+Format your response exactly like this:
+
+PHRASE: {phrase}
+LITERAL MEANING: [word-by-word translation]
+ACTUAL MEANING: [what it really means]
+
+TYPE: [idiom/expression/collocation/compound verb/etc.]
+REGISTER: [formal/informal/neutral/slang]
+
+USAGE:
+[When and how to use this phrase]
+
+EXAMPLES:
+• [Ukrainian sentence using the phrase] — [English translation]
+• [Ukrainian sentence using the phrase] — [English translation]
+
+RELATED EXPRESSIONS:
+• [similar phrase 1] — [translation]
+• [similar phrase 2] — [translation]
+
+NOTES:
+[Cultural context, common mistakes, or tips]"""
+
+        return self.provider.generate(prompt, system=SYSTEM_PROMPT, max_tokens=1500)

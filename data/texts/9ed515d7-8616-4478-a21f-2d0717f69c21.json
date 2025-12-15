@@ -1,0 +1,11 @@
+{
+  "id": "9ed515d7-8616-4478-a21f-2d0717f69c21",
+  "title": "Придбання хліба",
+  "content": "- Доброго дня!  \n- Доброго дня! Чим можу допомогти?  \n- Я хочу купити буханку хліба.  \n- Ось, будь ласка. Скільки коштує?  \n- Десять гривень.  \n- Ось ваші гроші.  \n- Дякую! Гарного дня!  \n- На все добре!",
+  "difficulty": "beginner",
+  "tags": [
+    "generate a dialog between a shop customer and shopkeeper for buying a loaf of bread starting from greetings though paying and leaving the shop"
+  ],
+  "created_at": "2025-12-15T11:54:33.668114",
+  "source": "ai_generated"
+}

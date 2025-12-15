@@ -412,11 +412,43 @@ class AnnotatedTextViewer(urwid.WidgetWrap):
         sorted_indices = sorted(self.selected_indices)
         return [self.words[i].normalized for i in sorted_indices if i < len(self.words)]
 
+    def get_selected_words_original(self) -> list[str]:
+        """Get selected words in original form (not normalized) in document order."""
+        sorted_indices = sorted(self.selected_indices)
+        return [self.words[i].text for i in sorted_indices if i < len(self.words)]
+
     def get_current_word(self) -> str | None:
         """Get the current word under cursor."""
         if self.words and 0 <= self.cursor_pos < len(self.words):
             return self.words[self.cursor_pos].normalized
         return None
+
+    def get_current_word_original(self) -> str | None:
+        """Get the current word under cursor in original form."""
+        if self.words and 0 <= self.cursor_pos < len(self.words):
+            return self.words[self.cursor_pos].text
+        return None
+
+    def is_selection_contiguous(self) -> bool:
+        """Check if selected words are contiguous in the document."""
+        if len(self.selected_indices) <= 1:
+            return True
+
+        sorted_indices = sorted(self.selected_indices)
+        for i in range(1, len(sorted_indices)):
+            if sorted_indices[i] != sorted_indices[i-1] + 1:
+                return False
+        return True
+
+    def get_selection_as_phrase(self) -> str | None:
+        """Get selected words as a phrase if contiguous, None otherwise."""
+        if not self.selected_indices:
+            return None
+
+        if not self.is_selection_contiguous():
+            return None
+
+        return " ".join(self.get_selected_words_original())
 
     def clear_selection(self):
         """Clear all selected words but keep cursor."""

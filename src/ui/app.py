@@ -1,7 +1,6 @@
 """Main application entry point."""
 
 import os
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -310,6 +309,9 @@ Text View:
   Click/Space Select words
   k           Mark selected as Known
   l           Mark selected as Learning
+  t           Translate selected words
+  p/P         Pronounce (normal/slow)
+  i           Show detailed word info
   Esc         Clear selection
 
 Word Lists:
@@ -341,6 +343,61 @@ Press any key to close...
 
         self.loop.widget = overlay
         self.loop.unhandled_input = close_help
+
+    def show_word_info(self, word_or_phrase: str, is_phrase: bool = False):
+        """Show detailed word/phrase info in an overlay.
+
+        Checks cache first, falls back to AI generation.
+        """
+        # Check cache first
+        cached = self.db.get_word_info(word_or_phrase)
+
+        if cached:
+            content = cached
+        elif self.generator:
+            # Generate via AI
+            self.show_message(f"Looking up '{word_or_phrase}'...")
+            try:
+                if is_phrase:
+                    content = self.generator.get_phrase_info(word_or_phrase)
+                else:
+                    content = self.generator.get_word_info(word_or_phrase)
+
+                # Cache the result
+                info_type = "phrase" if is_phrase else "word"
+                self.db.save_word_info(word_or_phrase, info_type, content)
+            except Exception as e:
+                self.show_message(f"Error: {e}")
+                return
+        else:
+            self.show_message("AI not configured - cannot look up word info")
+            return
+
+        # Display in overlay
+        text = urwid.Text(content)
+        walker = urwid.SimpleFocusListWalker([text])
+        listbox = urwid.ListBox(walker)
+        box = urwid.LineBox(listbox, title=f"Info: {word_or_phrase}")
+
+        overlay = urwid.Overlay(
+            box,
+            self.frame,
+            align="center",
+            width=("relative", 80),
+            valign="middle",
+            height=("relative", 80),
+        )
+
+        def close_info(key):
+            if key in ("q", "Q", "esc", "escape"):
+                self.loop.widget = self.frame
+                self.loop.unhandled_input = self.handle_input
+                self.update_status()
+                return True
+            return False
+
+        self.loop.widget = overlay
+        self.loop.unhandled_input = close_info
 
     def run(self):
         """Run the application."""

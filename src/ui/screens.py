@@ -3,10 +3,8 @@
 import urwid
 
 from src.core.models import Text, WordList, GrammarNote, WordStage
-from src.core.text_processor import TextProcessor
 from src.core.tts import get_tts, TTSError
-from src.ui.widgets import ListBrowser, TabBar, StatusBar, AnnotatedTextViewer
-from src.ui.theme import get_stage_attr
+from src.ui.widgets import ListBrowser, AnnotatedTextViewer
 
 
 class TextScreen(urwid.WidgetWrap):
@@ -125,6 +123,10 @@ class TextScreen(urwid.WidgetWrap):
             if words:
                 self._pronounce_words(words, slow=True)
             return None
+        elif key == "i":
+            # Show detailed info for selected/current word(s)
+            self._show_word_info()
+            return None
         elif key == "esc":
             self.clear_selection()
             self.app.update_status()
@@ -177,6 +179,29 @@ class TextScreen(urwid.WidgetWrap):
         else:
             self.app.show_message("All words already have translations")
         self.app.update_status()
+
+    def _show_word_info(self):
+        """Show detailed info for selected or current word(s)."""
+        # Check for contiguous phrase first
+        phrase = self.text_viewer.get_selection_as_phrase()
+        if phrase and len(phrase.split()) > 1:
+            # Multiple contiguous words = phrase
+            self.app.show_word_info(phrase, is_phrase=True)
+            return
+
+        # Single selected word or current word
+        selected = self.text_viewer.get_selected_words_original()
+        if selected:
+            # Use first selected word
+            word = selected[0]
+        else:
+            # Use current word under cursor
+            word = self.text_viewer.get_current_word_original()
+
+        if word:
+            self.app.show_word_info(word, is_phrase=False)
+        else:
+            self.app.show_message("No word selected")
 
 
 class WordEntryItem(urwid.WidgetWrap):
