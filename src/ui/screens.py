@@ -4,6 +4,7 @@ import urwid
 
 from src.core.models import Text, WordList, GrammarNote, WordStage
 from src.core.text_processor import TextProcessor
+from src.core.tts import get_tts, TTSError
 from src.ui.widgets import ListBrowser, TabBar, StatusBar, AnnotatedTextViewer
 from src.ui.theme import get_stage_attr
 
@@ -103,12 +104,40 @@ class TextScreen(urwid.WidgetWrap):
             # Translate selected words via AI
             self._translate_selected(selected)
             return None
+        elif key == "p" and selected:
+            # Pronounce selected words
+            self._pronounce_selected(selected)
+            return None
+        elif key == "P" and selected:
+            # Pronounce slowly
+            self._pronounce_selected(selected, slow=True)
+            return None
         elif key == "esc":
             self.clear_selection()
             self.app.update_status()
             return None
 
         return super().keypress(size, key)
+
+    def _pronounce_selected(self, selected: set[str], slow: bool = False):
+        """Pronounce selected words using TTS."""
+        try:
+            tts = get_tts()
+            if not tts.is_available():
+                self.app.show_message("TTS not available - install gTTS")
+                return
+
+            # Join words with spaces for pronunciation
+            text = " ".join(sorted(selected))
+            self.app.show_message(f"Speaking: {text}")
+
+            if slow:
+                tts.speak_slow(text)
+            else:
+                tts.speak(text)
+
+        except TTSError as e:
+            self.app.show_message(f"TTS error: {e}")
 
     def _translate_selected(self, selected: set[str]):
         """Translate selected words using AI."""
@@ -335,11 +364,46 @@ class WordListScreen(urwid.WidgetWrap):
             self._refresh_stages()
             return None
 
+        if key == "p" and self.selected_words:
+            # Pronounce selected words
+            self._pronounce_selected(slow=False)
+            return None
+
+        if key == "P" and self.selected_words:
+            # Pronounce slowly
+            self._pronounce_selected(slow=True)
+            return None
+
         if key == "esc":
             self._clear_selection()
             return None
 
         return super().keypress(size, key)
+
+    def _pronounce_selected(self, slow: bool = False):
+        """Pronounce selected words using TTS."""
+        try:
+            tts = get_tts()
+            if not tts.is_available():
+                self.app.show_message("TTS not available - install gTTS")
+                return
+
+            # Get the actual words (not lowercased)
+            words_to_speak = []
+            for item in self.word_items:
+                if item.word.lower() in self.selected_words:
+                    words_to_speak.append(item.word)
+
+            text = " ".join(words_to_speak)
+            self.app.show_message(f"Speaking: {text}")
+
+            if slow:
+                tts.speak_slow(text)
+            else:
+                tts.speak(text)
+
+        except TTSError as e:
+            self.app.show_message(f"TTS error: {e}")
 
     def _clear_selection(self):
         """Clear all selections."""
@@ -460,10 +524,10 @@ class QuizScreen(urwid.WidgetWrap):
 
         if self.revealed:
             self.translation_text.set_text(word.translation or "?")
-            self.hint_text.set_text("[k]now it  [a]gain  [n]ext  [q]uit")
+            self.hint_text.set_text("[k]now it  [a]gain  [n]ext  [p]ronounce  [q]uit")
         else:
             self.translation_text.set_text("")
-            self.hint_text.set_text("[Space] to reveal")
+            self.hint_text.set_text("[Space] to reveal  [p]ronounce")
 
         self.progress_text.set_text(f"{self.current_index + 1} / {len(self.words)}")
 
@@ -490,6 +554,14 @@ class QuizScreen(urwid.WidgetWrap):
                 self.app.switch_tab(0)
                 return None
             return key
+
+        # Pronounce current word - works whether revealed or not
+        if key == "p":
+            self._pronounce_current(slow=False)
+            return None
+        elif key == "P":
+            self._pronounce_current(slow=True)
+            return None
 
         if not self.revealed:
             if key == " ":
@@ -525,6 +597,26 @@ class QuizScreen(urwid.WidgetWrap):
         self.current_index += 1
         self.revealed = False
         self._show_current()
+
+    def _pronounce_current(self, slow: bool = False):
+        """Pronounce the current quiz word."""
+        if self.current_index >= len(self.words):
+            return
+
+        word = self.words[self.current_index]
+        try:
+            tts = get_tts()
+            if not tts.is_available():
+                self.app.show_message("TTS not available - install gTTS")
+                return
+
+            if slow:
+                tts.speak_slow(word.word)
+            else:
+                tts.speak(word.word)
+
+        except TTSError as e:
+            self.app.show_message(f"TTS error: {e}")
 
 
 class GenerateScreen(urwid.WidgetWrap):
