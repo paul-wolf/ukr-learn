@@ -58,9 +58,13 @@ class TextScreen(urwid.WidgetWrap):
         """Handle word click in text - just update status."""
         self.app.update_status()
 
-    def get_selected_words(self) -> set[str]:
-        """Get selected words from the text viewer."""
+    def get_selected_words(self) -> list[str]:
+        """Get selected words from the text viewer in document order."""
         return self.text_viewer.get_selected_words()
+
+    def get_current_word(self) -> str | None:
+        """Get the current word under cursor."""
+        return self.text_viewer.get_current_word()
 
     def clear_selection(self):
         """Clear word selection."""
@@ -68,6 +72,11 @@ class TextScreen(urwid.WidgetWrap):
 
     def keypress(self, size, key):
         selected = self.get_selected_words()
+        current = self.get_current_word()
+
+        # Note: Navigation keys (arrows, ctrl+f/b/n/p/a/e, space) are handled
+        # by App._input_filter() to bypass ListBox key consumption
+
         if key == "k" and selected:
             # Toggle: if all are known, set to new; otherwise set to known
             all_known = all(
@@ -75,10 +84,10 @@ class TextScreen(urwid.WidgetWrap):
                 for w in selected
             )
             if all_known:
-                self.app.vocabulary.bulk_set_stage(list(selected), WordStage.NEW)
+                self.app.vocabulary.bulk_set_stage(selected, WordStage.NEW)
                 self.app.show_message("Unmarked (set to new)")
             else:
-                self.app.vocabulary.bulk_set_stage(list(selected), WordStage.KNOWN)
+                self.app.vocabulary.bulk_set_stage(selected, WordStage.KNOWN)
                 self.app.show_message("Marked as known")
             self.clear_selection()
             if self.current_text:
@@ -91,10 +100,10 @@ class TextScreen(urwid.WidgetWrap):
                 for w in selected
             )
             if all_learning:
-                self.app.vocabulary.bulk_set_stage(list(selected), WordStage.NEW)
+                self.app.vocabulary.bulk_set_stage(selected, WordStage.NEW)
                 self.app.show_message("Unmarked (set to new)")
             else:
-                self.app.vocabulary.bulk_set_stage(list(selected), WordStage.LEARNING)
+                self.app.vocabulary.bulk_set_stage(selected, WordStage.LEARNING)
                 self.app.show_message("Marked as learning")
             self.clear_selection()
             if self.current_text:
@@ -104,13 +113,17 @@ class TextScreen(urwid.WidgetWrap):
             # Translate selected words via AI
             self._translate_selected(selected)
             return None
-        elif key == "p" and selected:
-            # Pronounce selected words
-            self._pronounce_selected(selected)
+        elif key == "p":
+            # Pronounce selected words (or current word if none selected)
+            words = selected if selected else ([current] if current else [])
+            if words:
+                self._pronounce_words(words)
             return None
-        elif key == "P" and selected:
+        elif key == "P":
             # Pronounce slowly
-            self._pronounce_selected(selected, slow=True)
+            words = selected if selected else ([current] if current else [])
+            if words:
+                self._pronounce_words(words, slow=True)
             return None
         elif key == "esc":
             self.clear_selection()
@@ -119,16 +132,16 @@ class TextScreen(urwid.WidgetWrap):
 
         return super().keypress(size, key)
 
-    def _pronounce_selected(self, selected: set[str], slow: bool = False):
-        """Pronounce selected words using TTS."""
+    def _pronounce_words(self, words: list[str], slow: bool = False):
+        """Pronounce words using TTS (already in document order)."""
         try:
             tts = get_tts()
             if not tts.is_available():
                 self.app.show_message("TTS not available - install gTTS")
                 return
 
-            # Join words with spaces for pronunciation
-            text = " ".join(sorted(selected))
+            # Words are already in document order
+            text = " ".join(words)
             self.app.show_message(f"Speaking: {text}")
 
             if slow:
@@ -139,7 +152,7 @@ class TextScreen(urwid.WidgetWrap):
         except TTSError as e:
             self.app.show_message(f"TTS error: {e}")
 
-    def _translate_selected(self, selected: set[str]):
+    def _translate_selected(self, selected: list[str]):
         """Translate selected words using AI."""
         if not self.app.generator:
             self.app.show_message("AI not configured - set API key in config")

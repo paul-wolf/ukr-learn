@@ -213,10 +213,12 @@ class App:
 
         if current == self.text_screen:
             selected = self.text_screen.get_selected_words()
+            current_word = self.text_screen.get_current_word()
+
             if selected:
                 # Show translation(s) for selected words
                 if len(selected) == 1:
-                    word = list(selected)[0]
+                    word = selected[0]
                     translation = self.lookup_translation(word)
                     if translation:
                         trans_text = f'"{word}" = {translation}'
@@ -225,16 +227,24 @@ class App:
                 else:
                     # Multiple words - show translations for up to 3
                     trans_parts = []
-                    for w in list(selected)[:3]:
+                    for w in selected[:3]:
                         t = self.lookup_translation(w)
                         trans_parts.append(f"{w}={t}" if t else f"{w}=?")
                     trans_text = ", ".join(trans_parts)
                     if len(selected) > 3:
                         trans_text += f" (+{len(selected)-3} more)"
 
-                hint = f" | {trans_text} | [k]nown [l]earning [t]ranslate [Esc]clear"
+                hint = f" | {trans_text} | [k]nown [l]earning [t]ranslate [p]ronounce [Esc]clear"
+            elif current_word:
+                # Show current word under cursor
+                translation = self.lookup_translation(current_word)
+                if translation:
+                    trans_text = f'"{current_word}" = {translation}'
+                else:
+                    trans_text = f'"{current_word}"'
+                hint = f" | {trans_text} | [Space]select [p]ronounce | arrows/C-f/b/n/p to navigate"
             else:
-                hint = " | Click words to select | [q]uit"
+                hint = " | arrows/C-f/b/n/p to navigate | [Space]select | [q]uit"
             self.status_bar.set_text(base_status + hint)
 
         elif current == self.wordlist_screen:
@@ -261,6 +271,7 @@ class App:
 
     def handle_input(self, key):
         """Handle global key input."""
+
         # Handle tuple keys (special keys) - ignore them
         if not isinstance(key, str):
             return

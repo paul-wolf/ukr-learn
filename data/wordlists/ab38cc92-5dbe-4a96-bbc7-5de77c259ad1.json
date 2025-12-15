@@ -1,0 +1,108 @@
+{
+  "id": "ab38cc92-5dbe-4a96-bbc7-5de77c259ad1",
+  "title": "Numbers Vocabulary",
+  "theme": "numbers",
+  "words": [
+    {
+      "word": "1. один",
+      "translation": "one",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "2. два",
+      "translation": "two",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "3. три",
+      "translation": "three",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "4. чотири",
+      "translation": "four",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "5. п'ять",
+      "translation": "five",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "6. шість",
+      "translation": "six",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "7. сім",
+      "translation": "seven",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "8. вісім",
+      "translation": "eight",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "9. дев'ять",
+      "translation": "nine",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "10. десять",
+      "translation": "ten",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "11. одинадцять",
+      "translation": "eleven",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "12. дванадцять",
+      "translation": "twelve",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "13. тринадцять",
+      "translation": "thirteen",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "14. чотирнадцять",
+      "translation": "fourteen",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "15. п'ятнадцять",
+      "translation": "fifteen",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "16. шістнадцять",
+      "translation": "sixteen",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "17. сімнадцять",
+      "translation": "seventeen",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "18. вісімнадцять",
+      "translation": "eighteen",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "19. дев'ятнадцять",
+      "translation": "nineteen",
+      "notes": "cardinal number"
+    },
+    {
+      "word": "20. двадцять",
+      "translation": "twenty",
+      "notes": "cardinal number"
+    }
+  ],
+  "created_at": "2025-12-15T11:12:55.259780"
+}

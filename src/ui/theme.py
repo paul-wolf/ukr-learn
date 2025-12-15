@@ -10,6 +10,12 @@ PALETTE = [
     ("new", "white", ""),
     ("selected", "standout", ""),
 
+    # Cursor (current word) - underline variants
+    ("cursor", "white,underline", ""),
+    ("cursor_known", "light green,underline", ""),
+    ("cursor_learning", "yellow,underline", ""),
+    ("cursor_selected", "standout,underline", ""),
+
     # UI elements
     ("header", "white", "dark blue"),
     ("footer", "white", "dark gray"),
@@ -52,3 +58,15 @@ def get_stage_attr(stage) -> str:
         WordStage.LEARNING: "learning",
         WordStage.NEW: "new",
     }.get(stage, "new")
+
+
+def get_cursor_attr(stage, is_selected: bool) -> str:
+    """Get attribute name for cursor on a word with given stage."""
+    from src.core.models import WordStage
+    if is_selected:
+        return "cursor_selected"
+    return {
+        WordStage.KNOWN: "cursor_known",
+        WordStage.LEARNING: "cursor_learning",
+        WordStage.NEW: "cursor",
+    }.get(stage, "cursor")
