@@ -238,7 +238,12 @@ class App:
             self.status_bar.set_text(base_status + hint)
 
         elif current == self.wordlist_screen:
-            self.status_bar.set_text(base_status + " | [i]mport to vocabulary | [q]uit")
+            selected = self.wordlist_screen.selected_words
+            if selected:
+                hint = f" | Selected: {len(selected)} | [k]nown [l]earning [i]mport all [Esc]clear"
+            else:
+                hint = " | Space/click to select | [i]mport all to vocabulary | [q]uit"
+            self.status_bar.set_text(base_status + hint)
 
         elif current == self.grammar_screen:
             self.status_bar.set_text(base_status + " | [q]uit")

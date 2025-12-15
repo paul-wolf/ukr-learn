@@ -137,12 +137,75 @@ class TextScreen(urwid.WidgetWrap):
         self.app.update_status()
 
 
+class WordEntryItem(urwid.WidgetWrap):
+    """A selectable word entry in a word list."""
+
+    def __init__(self, word: str, translation: str, notes: str | None, stage: WordStage, on_select=None):
+        self.word = word
+        self.translation = translation
+        self.notes = notes
+        self.stage = stage
+        self.on_select = on_select
+        self.selected = False
+
+        self._build()
+
+    def _build(self):
+        """Build the widget display."""
+        if self.stage == WordStage.KNOWN:
+            stage_text = "[K]"
+            attr = "known"
+        elif self.stage == WordStage.LEARNING:
+            stage_text = "[L]"
+            attr = "learning"
+        else:
+            stage_text = "[ ]"
+            attr = "new"
+
+        text = f"{stage_text} {self.word} - {self.translation}"
+        if self.notes:
+            text += f" ({self.notes})"
+
+        if self.selected:
+            attr = "selected"
+
+        self.text_widget = urwid.Text(text)
+        self._w = urwid.AttrMap(self.text_widget, attr, focus_map="list_item_focus")
+
+    def set_stage(self, stage: WordStage):
+        """Update the stage and rebuild."""
+        self.stage = stage
+        self._build()
+
+    def toggle_selected(self):
+        """Toggle selection state."""
+        self.selected = not self.selected
+        self._build()
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        if key in (" ", "enter") and self.on_select:
+            self.on_select(self)
+            return None
+        return key
+
+    def mouse_event(self, size, event, button, col, row, focus):
+        if event == "mouse press" and button == 1 and self.on_select:
+            self.on_select(self)
+            return True
+        return False
+
+
 class WordListScreen(urwid.WidgetWrap):
     """Screen for viewing word lists."""
 
     def __init__(self, app):
         self.app = app
         self.current_list: WordList | None = None
+        self.word_items: list[WordEntryItem] = []
+        self.selected_words: set[str] = set()
 
         # List browser for word lists
         self.list_browser = ListBrowser(on_select=self._on_list_select)
@@ -173,11 +236,13 @@ class WordListScreen(urwid.WidgetWrap):
         wordlist = self.app.content.get_wordlist(list_id)
         if wordlist:
             self.current_list = wordlist
+            self.selected_words.clear()
             self._show_wordlist(wordlist)
 
     def _show_wordlist(self, wordlist: WordList):
         """Display a word list."""
         self.word_walker.clear()
+        self.word_items.clear()
         self.content_box.set_title(wordlist.title)
 
         known = self.app.vocabulary.get_known_words()
@@ -186,23 +251,46 @@ class WordListScreen(urwid.WidgetWrap):
         for entry in wordlist.words:
             word_lower = entry.word.lower()
             if word_lower in known:
-                stage_attr = "known"
-                stage_text = "[K]"
+                stage = WordStage.KNOWN
             elif word_lower in learning:
-                stage_attr = "learning"
-                stage_text = "[L]"
+                stage = WordStage.LEARNING
             else:
-                stage_attr = "new"
-                stage_text = "[ ]"
+                stage = WordStage.NEW
 
-            # Format: [stage] word - translation (notes)
-            text = f"{stage_text} {entry.word} - {entry.translation}"
-            if entry.notes:
-                text += f" ({entry.notes})"
+            item = WordEntryItem(
+                word=entry.word,
+                translation=entry.translation,
+                notes=entry.notes,
+                stage=stage,
+                on_select=self._on_word_select,
+            )
+            self.word_items.append(item)
+            self.word_walker.append(item)
 
-            widget = urwid.Text(text)
-            widget = urwid.AttrMap(widget, stage_attr)
-            self.word_walker.append(widget)
+        self.app.update_status()
+
+    def _on_word_select(self, item: WordEntryItem):
+        """Handle word entry selection."""
+        item.toggle_selected()
+        if item.selected:
+            self.selected_words.add(item.word.lower())
+        else:
+            self.selected_words.discard(item.word.lower())
+        self.app.update_status()
+
+    def _refresh_stages(self):
+        """Refresh stage display for all items."""
+        known = self.app.vocabulary.get_known_words()
+        learning = self.app.vocabulary.get_learning_words()
+
+        for item in self.word_items:
+            word_lower = item.word.lower()
+            if word_lower in known:
+                item.set_stage(WordStage.KNOWN)
+            elif word_lower in learning:
+                item.set_stage(WordStage.LEARNING)
+            else:
+                item.set_stage(WordStage.NEW)
 
     def keypress(self, size, key):
         if key == "i" and self.current_list:
@@ -211,10 +299,55 @@ class WordListScreen(urwid.WidgetWrap):
                 self.current_list.id,
                 self.app.vocabulary,
             )
+            self._refresh_stages()
             self.app.show_message(f"Imported {count} words to vocabulary")
             return None
 
+        if key == "k" and self.selected_words:
+            # Toggle known
+            all_known = all(
+                self.app.vocabulary.get_stage(w) == WordStage.KNOWN
+                for w in self.selected_words
+            )
+            if all_known:
+                self.app.vocabulary.bulk_set_stage(list(self.selected_words), WordStage.NEW)
+                self.app.show_message("Unmarked (set to new)")
+            else:
+                self.app.vocabulary.bulk_set_stage(list(self.selected_words), WordStage.KNOWN)
+                self.app.show_message("Marked as known")
+            self._clear_selection()
+            self._refresh_stages()
+            return None
+
+        if key == "l" and self.selected_words:
+            # Toggle learning
+            all_learning = all(
+                self.app.vocabulary.get_stage(w) == WordStage.LEARNING
+                for w in self.selected_words
+            )
+            if all_learning:
+                self.app.vocabulary.bulk_set_stage(list(self.selected_words), WordStage.NEW)
+                self.app.show_message("Unmarked (set to new)")
+            else:
+                self.app.vocabulary.bulk_set_stage(list(self.selected_words), WordStage.LEARNING)
+                self.app.show_message("Marked as learning")
+            self._clear_selection()
+            self._refresh_stages()
+            return None
+
+        if key == "esc":
+            self._clear_selection()
+            return None
+
         return super().keypress(size, key)
+
+    def _clear_selection(self):
+        """Clear all selections."""
+        for item in self.word_items:
+            if item.selected:
+                item.toggle_selected()
+        self.selected_words.clear()
+        self.app.update_status()
 
 
 class GrammarScreen(urwid.WidgetWrap):
@@ -401,39 +534,22 @@ class GenerateScreen(urwid.WidgetWrap):
         self.app = app
 
         # Options
-        self.content_type = "text"  # text, wordlist, grammar
-        self.topic_edit = urwid.Edit("Topic: ")
+        self.content_type = "wordlist"  # text, wordlist, grammar
+        self.topic_edit = urwid.Edit("")
         self.status_text = urwid.Text("")
+        self.type_text = urwid.Text("")
 
-        # Type buttons
-        text_btn = urwid.Button("Text")
-        wordlist_btn = urwid.Button("Word List")
-        grammar_btn = urwid.Button("Grammar")
+        self._update_type_display()
+        self._update_status()
 
-        urwid.connect_signal(text_btn, "click", lambda b: self._set_type("text"))
-        urwid.connect_signal(wordlist_btn, "click", lambda b: self._set_type("wordlist"))
-        urwid.connect_signal(grammar_btn, "click", lambda b: self._set_type("grammar"))
-
-        type_row = urwid.Columns([
-            urwid.AttrMap(text_btn, "button", focus_map="button_focus"),
-            urwid.AttrMap(wordlist_btn, "button", focus_map="button_focus"),
-            urwid.AttrMap(grammar_btn, "button", focus_map="button_focus"),
-        ], dividechars=2)
-
-        # Generate button
-        gen_btn = urwid.Button("Generate [Enter]")
-        urwid.connect_signal(gen_btn, "click", lambda b: self._generate())
-
-        # Layout
+        # Simple layout - just the edit field is interactive
         pile = urwid.Pile([
-            urwid.Text("Generate Content", align="center"),
+            urwid.Text("GENERATE CONTENT", align="center"),
             urwid.Divider(),
-            urwid.Text("Content Type:"),
-            type_row,
+            self.type_text,
             urwid.Divider(),
-            self.topic_edit,
-            urwid.Divider(),
-            urwid.AttrMap(gen_btn, "button", focus_map="button_focus"),
+            urwid.Text("Topic:"),
+            urwid.AttrMap(self.topic_edit, "list_item_focus"),
             urwid.Divider(),
             self.status_text,
         ])
@@ -443,23 +559,33 @@ class GenerateScreen(urwid.WidgetWrap):
 
         super().__init__(box)
 
-    def _set_type(self, content_type: str):
-        """Set the content type to generate."""
-        self.content_type = content_type
-        self.status_text.set_text(f"Selected: {content_type}")
+    def _update_type_display(self):
+        """Update the type selection display."""
+        markers = {
+            "text": ["*Text", "Word List", "Grammar"],
+            "wordlist": ["Text", "*Word List", "Grammar"],
+            "grammar": ["Text", "Word List", "*Grammar"],
+        }
+        m = markers[self.content_type]
+        self.type_text.set_text(f"Type: [F1] {m[0]}  [F2] {m[1]}  [F3] {m[2]}")
+
+    def _update_status(self):
+        """Update status text."""
+        ai_status = "ready" if self.app.generator else "NOT CONFIGURED"
+        self.status_text.set_text(f"AI: {ai_status} | [Ctrl-G] or [F5] to generate")
 
     def _generate(self):
         """Generate content."""
         topic = self.topic_edit.edit_text.strip()
         if not topic:
-            self.status_text.set_text("Please enter a topic")
+            self.status_text.set_text("ERROR: Please enter a topic first")
             return
 
         if not self.app.generator:
-            self.status_text.set_text("AI not configured - check config.yaml")
+            self.status_text.set_text("ERROR: AI not configured - set API key")
             return
 
-        self.status_text.set_text("Generating...")
+        self.status_text.set_text(f"Generating {self.content_type}...")
 
         try:
             if self.content_type == "text":
@@ -481,7 +607,26 @@ class GenerateScreen(urwid.WidgetWrap):
             self.status_text.set_text(f"Error: {str(e)}")
 
     def keypress(self, size, key):
-        if key == "enter":
+        # Type selection with function keys
+        if key == "f1":
+            self.content_type = "text"
+            self._update_type_display()
+            return None
+        elif key == "f2":
+            self.content_type = "wordlist"
+            self._update_type_display()
+            return None
+        elif key == "f3":
+            self.content_type = "grammar"
+            self._update_type_display()
+            return None
+        elif key == "f5" or key == "ctrl g":
             self._generate()
             return None
+
+        # Forward printable keys directly to the edit widget
+        if len(key) == 1 or key in ('backspace', 'delete', 'left', 'right', 'home', 'end'):
+            self.topic_edit.keypress((size[0],), key)
+            return None
+
         return super().keypress(size, key)

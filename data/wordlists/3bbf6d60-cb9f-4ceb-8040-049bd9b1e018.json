@@ -1,0 +1,108 @@
+{
+  "id": "3bbf6d60-cb9f-4ceb-8040-049bd9b1e018",
+  "title": "Prepositions Vocabulary",
+  "theme": "prepositions",
+  "words": [
+    {
+      "word": "1. в",
+      "translation": "in",
+      "notes": "preposition of location"
+    },
+    {
+      "word": "2. на",
+      "translation": "on",
+      "notes": "preposition of location"
+    },
+    {
+      "word": "3. під",
+      "translation": "under",
+      "notes": "preposition of location"
+    },
+    {
+      "word": "4. над",
+      "translation": "above",
+      "notes": "preposition of location"
+    },
+    {
+      "word": "5. між",
+      "translation": "between",
+      "notes": "preposition of location"
+    },
+    {
+      "word": "6. з",
+      "translation": "with",
+      "notes": "preposition indicating accompaniment"
+    },
+    {
+      "word": "7. до",
+      "translation": "to",
+      "notes": "preposition indicating direction"
+    },
+    {
+      "word": "8. від",
+      "translation": "from",
+      "notes": "preposition indicating origin"
+    },
+    {
+      "word": "9. про",
+      "translation": "about",
+      "notes": "preposition indicating subject matter"
+    },
+    {
+      "word": "10. для",
+      "translation": "for",
+      "notes": "preposition indicating purpose"
+    },
+    {
+      "word": "11. без",
+      "translation": "without",
+      "notes": "preposition indicating absence"
+    },
+    {
+      "word": "12. через",
+      "translation": "through",
+      "notes": "preposition indicating passage"
+    },
+    {
+      "word": "13. біля",
+      "translation": "near",
+      "notes": "preposition indicating proximity"
+    },
+    {
+      "word": "14. поряд",
+      "translation": "next to",
+      "notes": "preposition indicating nearness"
+    },
+    {
+      "word": "15. в час",
+      "translation": "at (time)",
+      "notes": "preposition indicating time"
+    },
+    {
+      "word": "16. у",
+      "translation": "in (used before certain letters)",
+      "notes": "preposition of location"
+    },
+    {
+      "word": "17. між іншим",
+      "translation": "among other things",
+      "notes": "phrase indicating inclusion"
+    },
+    {
+      "word": "18. згідно з",
+      "translation": "according to",
+      "notes": "preposition indicating agreement"
+    },
+    {
+      "word": "19. до щодо",
+      "translation": "regarding",
+      "notes": "preposition indicating relation"
+    },
+    {
+      "word": "20. як",
+      "translation": "like/as",
+      "notes": "preposition indicating comparison"
+    }
+  ],
+  "created_at": "2025-12-15T10:36:50.230751"
+}

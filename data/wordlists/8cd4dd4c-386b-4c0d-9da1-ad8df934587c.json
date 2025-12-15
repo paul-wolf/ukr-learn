@@ -1,0 +1,108 @@
+{
+  "id": "8cd4dd4c-386b-4c0d-9da1-ad8df934587c",
+  "title": "Prepositions Vocabulary",
+  "theme": "prepositions",
+  "words": [
+    {
+      "word": "1. на",
+      "translation": "on",
+      "notes": "preposition"
+    },
+    {
+      "word": "2. під",
+      "translation": "under",
+      "notes": "preposition"
+    },
+    {
+      "word": "3. в",
+      "translation": "in",
+      "notes": "preposition (also \"into\" in some contexts)"
+    },
+    {
+      "word": "4. з",
+      "translation": "with, from",
+      "notes": "preposition"
+    },
+    {
+      "word": "5. до",
+      "translation": "to",
+      "notes": "preposition"
+    },
+    {
+      "word": "6. після",
+      "translation": "after",
+      "notes": "preposition"
+    },
+    {
+      "word": "7. перед",
+      "translation": "before",
+      "notes": "preposition"
+    },
+    {
+      "word": "8. між",
+      "translation": "between",
+      "notes": "preposition"
+    },
+    {
+      "word": "9. про",
+      "translation": "about",
+      "notes": "preposition"
+    },
+    {
+      "word": "10. для",
+      "translation": "for",
+      "notes": "preposition"
+    },
+    {
+      "word": "11. над",
+      "translation": "over",
+      "notes": "preposition"
+    },
+    {
+      "word": "12. за",
+      "translation": "behind, for",
+      "notes": "preposition"
+    },
+    {
+      "word": "13. всередині",
+      "translation": "inside",
+      "notes": "preposition"
+    },
+    {
+      "word": "14. ззовні",
+      "translation": "outside",
+      "notes": "preposition"
+    },
+    {
+      "word": "15. біля",
+      "translation": "near",
+      "notes": "preposition"
+    },
+    {
+      "word": "16. вгору",
+      "translation": "upwards",
+      "notes": "preposition"
+    },
+    {
+      "word": "17. вниз",
+      "translation": "down",
+      "notes": "preposition"
+    },
+    {
+      "word": "18. попереду",
+      "translation": "ahead",
+      "notes": "preposition"
+    },
+    {
+      "word": "19. назад",
+      "translation": "back",
+      "notes": "preposition"
+    },
+    {
+      "word": "20. навколо",
+      "translation": "around",
+      "notes": "preposition"
+    }
+  ],
+  "created_at": "2025-12-15T10:37:15.727269"
+}

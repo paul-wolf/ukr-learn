@@ -1,0 +1,108 @@
+{
+  "id": "b9d89248-52f7-4b16-8933-88fe1914a5e5",
+  "title": "Prepositions Vocabulary",
+  "theme": "prepositions",
+  "words": [
+    {
+      "word": "1. на",
+      "translation": "on",
+      "notes": "preposition"
+    },
+    {
+      "word": "2. в",
+      "translation": "in",
+      "notes": "preposition"
+    },
+    {
+      "word": "3. з",
+      "translation": "with",
+      "notes": "preposition, indicates accompaniment or association"
+    },
+    {
+      "word": "4. до",
+      "translation": "to",
+      "notes": "preposition, indicates direction or destination"
+    },
+    {
+      "word": "5. під",
+      "translation": "under",
+      "notes": "preposition"
+    },
+    {
+      "word": "6. між",
+      "translation": "between",
+      "notes": "preposition"
+    },
+    {
+      "word": "7. для",
+      "translation": "for",
+      "notes": "preposition, indicates purpose or benefit"
+    },
+    {
+      "word": "8. про",
+      "translation": "about",
+      "notes": "preposition, indicates a topic"
+    },
+    {
+      "word": "9. від",
+      "translation": "from",
+      "notes": "preposition, indicates origin or separation"
+    },
+    {
+      "word": "10. над",
+      "translation": "over",
+      "notes": "preposition"
+    },
+    {
+      "word": "11. перед",
+      "translation": "in front of",
+      "notes": "preposition"
+    },
+    {
+      "word": "12. за",
+      "translation": "behind",
+      "notes": "preposition, can also mean \"for\" in some contexts"
+    },
+    {
+      "word": "13. без",
+      "translation": "without",
+      "notes": "preposition"
+    },
+    {
+      "word": "14. крім",
+      "translation": "except",
+      "notes": "preposition"
+    },
+    {
+      "word": "15. проти",
+      "translation": "against",
+      "notes": "preposition"
+    },
+    {
+      "word": "16. через",
+      "translation": "through",
+      "notes": "preposition, indicates a passage"
+    },
+    {
+      "word": "17. серед",
+      "translation": "among",
+      "notes": "preposition"
+    },
+    {
+      "word": "18. на базі",
+      "translation": "based on",
+      "notes": "prepositional phrase"
+    },
+    {
+      "word": "19. перед тим",
+      "translation": "before",
+      "notes": "prepositional phrase, indicates time"
+    },
+    {
+      "word": "20. після",
+      "translation": "after",
+      "notes": "preposition"
+    }
+  ],
+  "created_at": "2025-12-15T10:38:56.620958"
+}
