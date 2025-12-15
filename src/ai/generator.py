@@ -319,19 +319,26 @@ Words: {words_str}
 
 For each unique lemma, provide:
 1. The dictionary form (lemma)
-2. English translation
-3. Part of speech
-4. Which inflected forms from the list belong to this lemma
+2. Phonetic pronunciation (for English speakers, using simple phonetics)
+3. English translation
+4. Part of speech
+5. Which inflected forms from the list belong to this lemma
 
 Format your response EXACTLY like this, one entry per line:
-LEMMA | translation | part of speech | forms: form1, form2, ...
+LEMMA | phonetic | translation | part of speech | forms: form1, form2, ...
 
 Example:
-кіт | cat | noun (m) | forms: кота, коти, коту, котів
-бути | to be | verb | forms: є, був, була, буде
-великий | big, large | adjective | forms: великий, велика, великого
+кіт | keet | cat | noun (m) | forms: кота, коти, коту
+бути | BOO-tih | to be | verb | forms: є, був, була
+великий | veh-LIH-kiy | big, large | adj | forms: великий, велика
+привіт | prih-VEET | hello | interjection | forms: привіт
 
-Rules:
+Phonetic rules:
+- Use simple English phonetics (no IPA)
+- Capitalize the stressed syllable
+- Use common English letter combinations (ee, oo, ih, ah, etc.)
+
+Other rules:
 - List lemmas alphabetically
 - For nouns, indicate gender: (m), (f), (n)
 - For verbs, give infinitive as lemma

@@ -312,7 +312,7 @@ Text View:
   t           Translate selected words
   p/P         Pronounce (normal/slow)
   i           Show detailed word info
-  v           Show text vocabulary
+  v/V         Show text vocabulary (V=refresh)
   n           Add new text (paste)
   e           Edit current text
   Esc         Clear selection
@@ -599,11 +599,15 @@ Press any key to close...
         self.loop.widget = overlay
         self.loop.unhandled_input = handle_input
 
-    def show_text_vocabulary(self, text):
+    def show_text_vocabulary(self, text, force_refresh: bool = False):
         """Show vocabulary list for a text with translations.
 
         Uses AI analysis to group inflected forms under lemmas.
         Results are cached per text.
+
+        Args:
+            text: The text to analyze
+            force_refresh: If True, re-analyze even if cached
         """
         from src.core.text_processor import TextProcessor
 
@@ -615,9 +619,13 @@ Press any key to close...
             self.show_message("No words found in text")
             return
 
-        # Check cache first
+        # Check cache first (unless forcing refresh)
         cache_key = f"text_vocab:{text.id}"
-        cached = self.db.get_word_info(cache_key)
+        if force_refresh:
+            self.db.delete_word_info(cache_key)
+            cached = None
+        else:
+            cached = self.db.get_word_info(cache_key)
 
         if cached:
             # Use cached analysis
@@ -679,30 +687,47 @@ Press any key to close...
 
             lemma_count += 1
             parts = [p.strip() for p in line.split("|")]
-            if len(parts) >= 3:
+
+            # Handle both old format (4 parts) and new format (5 parts with phonetic)
+            if len(parts) >= 5:
+                # New format: LEMMA | phonetic | translation | pos | forms
                 lemma = parts[0]
+                phonetic = parts[1]
+                translation = parts[2]
+                pos = parts[3]
+                forms = parts[4] if len(parts) > 4 else ""
+            elif len(parts) >= 3:
+                # Old format: LEMMA | translation | pos | forms
+                lemma = parts[0]
+                phonetic = ""
                 translation = parts[1]
                 pos = parts[2]
                 forms = parts[3] if len(parts) > 3 else ""
+            else:
+                continue
 
-                # Determine stage based on lemma (normalized)
-                lemma_lower = lemma.lower()
-                if lemma_lower in known_words:
-                    stage_mark = "[K]"
-                elif lemma_lower in learning_words:
-                    stage_mark = "[L]"
-                else:
-                    stage_mark = "[N]"
+            # Determine stage based on lemma (normalized)
+            lemma_lower = lemma.lower()
+            if lemma_lower in known_words:
+                stage_mark = "[K]"
+            elif lemma_lower in learning_words:
+                stage_mark = "[L]"
+            else:
+                stage_mark = "[N]"
 
-                # Format: [K] кіт (noun m) — cat
-                #         forms: кота, коти, коту
+            # Format: [K] кіт /keet/ (noun m) — cat
+            #         └ кота, коти, коту
+            if phonetic:
+                entry = f"{stage_mark} {lemma} /{phonetic}/ ({pos}) — {translation}"
+            else:
                 entry = f"{stage_mark} {lemma} ({pos}) — {translation}"
+
+            if forms:
+                # Clean up "forms:" prefix if present
+                forms = forms.replace("forms:", "").strip()
                 if forms:
-                    # Clean up "forms:" prefix if present
-                    forms = forms.replace("forms:", "").strip()
-                    if forms:
-                        entry += f"\n    └ {forms}"
-                lines.append(entry)
+                    entry += f"\n    └ {forms}"
+            lines.append(entry)
 
         # Count stats based on lemmas in the analysis
         known_count = sum(1 for line in lines if line.startswith("[K]"))
@@ -711,7 +736,7 @@ Press any key to close...
 
         header = f"Lemmas: {lemma_count} | Known: {known_count} | Learning: {learning_count} | New: {new_count}\n"
         header += f"(from {len(words)} word forms in text)\n"
-        header += "─" * 55 + "\n\n"
+        header += "─" * 60 + "\n\n"
 
         return header + "\n".join(lines)
 

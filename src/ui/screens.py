@@ -145,6 +145,13 @@ class TextScreen(urwid.WidgetWrap):
             else:
                 self.app.show_message("No text selected")
             return None
+        elif key == "V":
+            # Force refresh vocabulary analysis
+            if self.current_text:
+                self.app.show_text_vocabulary(self.current_text, force_refresh=True)
+            else:
+                self.app.show_message("No text selected")
+            return None
         elif key == "esc":
             self.clear_selection()
             self.app.update_status()

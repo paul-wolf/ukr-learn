@@ -286,3 +286,20 @@ class Database:
         with self._connection() as conn:
             cursor = conn.execute("DELETE FROM word_info_cache")
             return cursor.rowcount
+
+    def delete_word_info(self, lookup_key: str) -> bool:
+        """Delete a specific cached word info entry.
+
+        Args:
+            lookup_key: The word/phrase key to delete
+
+        Returns:
+            True if an entry was deleted, False otherwise
+        """
+        key = lookup_key.lower().strip()
+        with self._connection() as conn:
+            cursor = conn.execute(
+                "DELETE FROM word_info_cache WHERE lookup_key = ?",
+                (key,)
+            )
+            return cursor.rowcount > 0

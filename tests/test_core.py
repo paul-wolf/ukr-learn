@@ -1,11 +1,10 @@
 """Simple unit tests for core functionality."""
 
-import pytest
 import tempfile
 from pathlib import Path
 
 # Models
-from src.core.models import WordStage, Word, Text, WordList, WordEntry, GrammarNote
+from src.core.models import WordStage, Text, WordList, WordEntry, GrammarNote
 
 # Text processor
 from src.core.text_processor import TextProcessor, strip_accents
