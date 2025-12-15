@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ukr-learn"
+version = "0.1.0"
+description = "Ukrainian language learning application with TUI"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "urwid>=2.1.2",
+    "anthropic>=0.18.0",
+    "openai>=1.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.scripts]
+ukr = "src.ui.app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

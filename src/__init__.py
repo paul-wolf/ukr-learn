@@ -1,0 +1,1 @@
+"""Ukrainian language learning application."""

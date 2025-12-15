@@ -1,0 +1,9 @@
+{
+  "id": "sample-greeting",
+  "title": "Привітання",
+  "content": "Привіт! Мене звати Марія. Як справи?\n\nДобре, дякую! А як у тебе?\n\nТеж добре. Радий тебе бачити!\n\nІ я рада. До побачення!\n\nБувай!",
+  "difficulty": "beginner",
+  "tags": ["greetings", "dialogue", "sample"],
+  "created_at": "2025-01-01T00:00:00",
+  "source": "sample"
+}

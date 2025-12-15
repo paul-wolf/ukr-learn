@@ -1,0 +1,30 @@
+# Ukrainian Language Learning App Configuration
+
+# AI Provider settings
+ai:
+  # Default provider: "anthropic" or "openai"
+  default_provider: anthropic
+
+  anthropic:
+    api_key: your-anthropic-api-key-here
+    model: claude-3-haiku-20240307
+
+  openai:
+    api_key: your-openai-api-key-here
+    model: gpt-4o-mini
+
+# Data storage paths (relative to project root)
+data:
+  texts_dir: data/texts
+  grammar_dir: data/grammar
+  wordlists_dir: data/wordlists
+  database: data/ukr.db
+
+# UI settings
+ui:
+  # Color scheme for word stages
+  colors:
+    known: light green
+    learning: yellow
+    new: white
+    selected: standout

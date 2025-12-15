@@ -1,0 +1,24 @@
+{
+  "id": "basic-greetings",
+  "title": "Basic Greetings",
+  "theme": "greetings",
+  "words": [
+    {"word": "привіт", "translation": "hello", "notes": "informal"},
+    {"word": "добрий день", "translation": "good day", "notes": "formal greeting"},
+    {"word": "доброго ранку", "translation": "good morning", "notes": null},
+    {"word": "добрий вечір", "translation": "good evening", "notes": null},
+    {"word": "до побачення", "translation": "goodbye", "notes": "formal"},
+    {"word": "бувай", "translation": "bye", "notes": "informal"},
+    {"word": "дякую", "translation": "thank you", "notes": null},
+    {"word": "будь ласка", "translation": "please / you're welcome", "notes": null},
+    {"word": "так", "translation": "yes", "notes": null},
+    {"word": "ні", "translation": "no", "notes": null},
+    {"word": "як справи", "translation": "how are you", "notes": "informal"},
+    {"word": "добре", "translation": "good / well", "notes": null},
+    {"word": "вибачте", "translation": "excuse me / sorry", "notes": "formal"},
+    {"word": "перепрошую", "translation": "I'm sorry", "notes": null},
+    {"word": "радий", "translation": "glad", "notes": "masculine"},
+    {"word": "рада", "translation": "glad", "notes": "feminine"}
+  ],
+  "created_at": "2025-01-01T00:00:00"
+}
