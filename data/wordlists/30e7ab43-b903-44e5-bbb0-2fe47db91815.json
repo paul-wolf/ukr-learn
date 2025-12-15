@@ -1,0 +1,108 @@
+{
+  "id": "30e7ab43-b903-44e5-bbb0-2fe47db91815",
+  "title": "Calendar Words, Days Of Week, Months Vocabulary",
+  "theme": "calendar words, days of week, months",
+  "words": [
+    {
+      "word": "понеділок",
+      "translation": "Monday",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "вівторок",
+      "translation": "Tuesday",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "середа",
+      "translation": "Wednesday",
+      "notes": "noun, feminine"
+    },
+    {
+      "word": "четвер",
+      "translation": "Thursday",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "п’ятниця",
+      "translation": "Friday",
+      "notes": "noun, feminine"
+    },
+    {
+      "word": "субота",
+      "translation": "Saturday",
+      "notes": "noun, feminine"
+    },
+    {
+      "word": "неділя",
+      "translation": "Sunday",
+      "notes": "noun, feminine"
+    },
+    {
+      "word": "січень",
+      "translation": "January",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "лютий",
+      "translation": "February",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "березень",
+      "translation": "March",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "квітень",
+      "translation": "April",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "травень",
+      "translation": "May",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "червень",
+      "translation": "June",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "липень",
+      "translation": "July",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "серпень",
+      "translation": "August",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "вересень",
+      "translation": "September",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "жовтень",
+      "translation": "October",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "листопад",
+      "translation": "November",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "грудень",
+      "translation": "December",
+      "notes": "noun, masculine"
+    },
+    {
+      "word": "місяць",
+      "translation": "month",
+      "notes": "noun, masculine"
+    }
+  ],
+  "created_at": "2025-12-15T10:58:45.470268"
+}

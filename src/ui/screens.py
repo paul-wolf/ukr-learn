@@ -530,25 +530,27 @@ class QuizScreen(urwid.WidgetWrap):
 class GenerateScreen(urwid.WidgetWrap):
     """Screen for AI content generation."""
 
+    TYPES = ["text", "wordlist", "grammar"]
+    TYPE_NAMES = {"text": "Text", "wordlist": "Word List", "grammar": "Grammar"}
+
     def __init__(self, app):
         self.app = app
 
         # Options
         self.content_type = "wordlist"  # text, wordlist, grammar
-        self.topic_edit = urwid.Edit("")
+        self.topic_edit = urwid.Edit("Topic: ")
         self.status_text = urwid.Text("")
         self.type_text = urwid.Text("")
 
         self._update_type_display()
         self._update_status()
 
-        # Simple layout - just the edit field is interactive
+        # Simple layout
         pile = urwid.Pile([
             urwid.Text("GENERATE CONTENT", align="center"),
             urwid.Divider(),
             self.type_text,
             urwid.Divider(),
-            urwid.Text("Topic:"),
             urwid.AttrMap(self.topic_edit, "list_item_focus"),
             urwid.Divider(),
             self.status_text,
@@ -561,22 +563,34 @@ class GenerateScreen(urwid.WidgetWrap):
 
     def _update_type_display(self):
         """Update the type selection display."""
-        markers = {
-            "text": ["*Text", "Word List", "Grammar"],
-            "wordlist": ["Text", "*Word List", "Grammar"],
-            "grammar": ["Text", "Word List", "*Grammar"],
-        }
-        m = markers[self.content_type]
-        self.type_text.set_text(f"Type: [F1] {m[0]}  [F2] {m[1]}  [F3] {m[2]}")
+        parts = []
+        for t in self.TYPES:
+            name = self.TYPE_NAMES[t]
+            if t == self.content_type:
+                parts.append(f"[{name}]")
+            else:
+                parts.append(name)
+        self.type_text.set_text(f"Type (Tab to change): {' | '.join(parts)}")
 
     def _update_status(self):
         """Update status text."""
         ai_status = "ready" if self.app.generator else "NOT CONFIGURED"
-        self.status_text.set_text(f"AI: {ai_status} | [Ctrl-G] or [F5] to generate")
+        self.status_text.set_text(f"AI: {ai_status} | Tab=change type | Enter=generate")
+
+    def _cycle_type(self):
+        """Cycle to next content type."""
+        idx = self.TYPES.index(self.content_type)
+        self.content_type = self.TYPES[(idx + 1) % len(self.TYPES)]
+        self._update_type_display()
 
     def _generate(self):
         """Generate content."""
         topic = self.topic_edit.edit_text.strip()
+        # Remove "Topic: " prefix if present
+        if topic.startswith("Topic: "):
+            topic = topic[7:]
+        topic = topic.strip()
+
         if not topic:
             self.status_text.set_text("ERROR: Please enter a topic first")
             return
@@ -585,46 +599,40 @@ class GenerateScreen(urwid.WidgetWrap):
             self.status_text.set_text("ERROR: AI not configured - set API key")
             return
 
-        self.status_text.set_text(f"Generating {self.content_type}...")
+        type_name = self.TYPE_NAMES[self.content_type]
+        self.status_text.set_text(f"Generating {type_name}...")
 
         try:
             if self.content_type == "text":
                 content = self.app.generator.generate_text(topic)
                 self.app.content.save_text(content)
-                self.status_text.set_text(f"Created text: {content.title}")
+                self.status_text.set_text(f"Created: {content.title}")
             elif self.content_type == "wordlist":
                 content = self.app.generator.generate_wordlist(topic)
                 self.app.content.save_wordlist(content)
-                self.status_text.set_text(f"Created word list: {content.title}")
+                self.status_text.set_text(f"Created: {content.title}")
             elif self.content_type == "grammar":
                 content = self.app.generator.generate_grammar_note(topic)
                 self.app.content.save_grammar(content)
-                self.status_text.set_text(f"Created grammar note: {content.title}")
+                self.status_text.set_text(f"Created: {content.title}")
 
-            self.topic_edit.edit_text = ""
+            self.topic_edit.edit_text = "Topic: "
 
         except Exception as e:
             self.status_text.set_text(f"Error: {str(e)}")
 
     def keypress(self, size, key):
-        # Type selection with function keys
-        if key == "f1":
-            self.content_type = "text"
-            self._update_type_display()
+        # Tab cycles content type
+        if key == "tab":
+            self._cycle_type()
             return None
-        elif key == "f2":
-            self.content_type = "wordlist"
-            self._update_type_display()
-            return None
-        elif key == "f3":
-            self.content_type = "grammar"
-            self._update_type_display()
-            return None
-        elif key == "f5" or key == "ctrl g":
+
+        # Enter generates
+        if key == "enter":
             self._generate()
             return None
 
-        # Forward printable keys directly to the edit widget
+        # Forward other keys to the edit widget
         if len(key) == 1 or key in ('backspace', 'delete', 'left', 'right', 'home', 'end'):
             self.topic_edit.keypress((size[0],), key)
             return None
