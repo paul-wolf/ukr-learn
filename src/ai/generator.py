@@ -300,3 +300,45 @@ NOTES:
 [Cultural context, common mistakes, or tips]"""
 
         return self.provider.generate(prompt, system=SYSTEM_PROMPT, max_tokens=1500)
+
+    def analyze_text_vocabulary(self, words: list[str]) -> str:
+        """
+        Analyze vocabulary from a text, grouping inflected forms.
+
+        Args:
+            words: List of unique words from a text
+
+        Returns:
+            Formatted vocabulary analysis with lemmas and translations
+        """
+        words_str = ", ".join(words)
+
+        prompt = f"""Analyze this list of Ukrainian words from a text. Group inflected forms under their dictionary form (lemma).
+
+Words: {words_str}
+
+For each unique lemma, provide:
+1. The dictionary form (lemma)
+2. English translation
+3. Part of speech
+4. Which inflected forms from the list belong to this lemma
+
+Format your response EXACTLY like this, one entry per line:
+LEMMA | translation | part of speech | forms: form1, form2, ...
+
+Example:
+кіт | cat | noun (m) | forms: кота, коти, коту, котів
+бути | to be | verb | forms: є, був, була, буде
+великий | big, large | adjective | forms: великий, велика, великого
+
+Rules:
+- List lemmas alphabetically
+- For nouns, indicate gender: (m), (f), (n)
+- For verbs, give infinitive as lemma
+- Group ALL inflected forms under their lemma
+- Include common words like prepositions, conjunctions
+- Be thorough - every word from the input should appear under some lemma
+
+Analyze ALL {len(words)} words:"""
+
+        return self.provider.generate(prompt, system=SYSTEM_PROMPT, max_tokens=4000)

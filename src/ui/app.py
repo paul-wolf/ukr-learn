@@ -600,46 +600,42 @@ Press any key to close...
         self.loop.unhandled_input = handle_input
 
     def show_text_vocabulary(self, text):
-        """Show vocabulary list for a text with translations."""
+        """Show vocabulary list for a text with translations.
+
+        Uses AI analysis to group inflected forms under lemmas.
+        Results are cached per text.
+        """
         from src.core.text_processor import TextProcessor
 
         processor = TextProcessor()
-        # Get unique words, sorted alphabetically
+        # Get unique words
         words = sorted(set(processor.extract_words(text.content)))
 
         if not words:
             self.show_message("No words found in text")
             return
 
-        # Build vocabulary list with translations and stages
-        known_words = self.vocabulary.get_known_words()
-        learning_words = self.vocabulary.get_learning_words()
+        # Check cache first
+        cache_key = f"text_vocab:{text.id}"
+        cached = self.db.get_word_info(cache_key)
 
-        lines = []
-        for word in words:
-            # Get translation
-            translation = self.lookup_translation(word)
-            trans_str = translation if translation else "?"
-
-            # Get stage
-            if word in known_words:
-                stage_mark = "[K]"
-            elif word in learning_words:
-                stage_mark = "[L]"
-            else:
-                stage_mark = "[N]"
-
-            lines.append(f"{stage_mark} {word} — {trans_str}")
-
-        # Summary
-        known_count = sum(1 for w in words if w in known_words)
-        learning_count = sum(1 for w in words if w in learning_words)
-        new_count = len(words) - known_count - learning_count
-
-        header = f"Words: {len(words)} total | Known: {known_count} | Learning: {learning_count} | New: {new_count}\n"
-        header += "─" * 50 + "\n\n"
-
-        content = header + "\n".join(lines)
+        if cached:
+            # Use cached analysis
+            content = self._format_vocab_display(cached, words)
+        elif self.generator:
+            # Generate via AI
+            self.show_message(f"Analyzing vocabulary ({len(words)} words)...")
+            try:
+                analysis = self.generator.analyze_text_vocabulary(words)
+                # Cache the result
+                self.db.save_word_info(cache_key, "text_vocab", analysis)
+                content = self._format_vocab_display(analysis, words)
+            except Exception as e:
+                self.show_message(f"Error: {e}")
+                return
+        else:
+            # No AI - fall back to simple list
+            content = self._format_simple_vocab(words)
 
         # Display in scrollable overlay
         text_widget = urwid.Text(content)
@@ -651,9 +647,9 @@ Press any key to close...
             box,
             self.frame,
             align="center",
-            width=("relative", 70),
+            width=("relative", 80),
             valign="middle",
-            height=("relative", 80),
+            height=("relative", 85),
         )
 
         def close_vocab(key):
@@ -666,6 +662,87 @@ Press any key to close...
 
         self.loop.widget = overlay
         self.loop.unhandled_input = close_vocab
+
+    def _format_vocab_display(self, analysis: str, words: list[str]) -> str:
+        """Format AI vocabulary analysis for display with stage markers."""
+        known_words = self.vocabulary.get_known_words()
+        learning_words = self.vocabulary.get_learning_words()
+
+        # Count unique lemmas and words
+        lemma_count = 0
+        lines = []
+
+        for line in analysis.strip().split("\n"):
+            line = line.strip()
+            if not line or "|" not in line:
+                continue
+
+            lemma_count += 1
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) >= 3:
+                lemma = parts[0]
+                translation = parts[1]
+                pos = parts[2]
+                forms = parts[3] if len(parts) > 3 else ""
+
+                # Determine stage based on lemma (normalized)
+                lemma_lower = lemma.lower()
+                if lemma_lower in known_words:
+                    stage_mark = "[K]"
+                elif lemma_lower in learning_words:
+                    stage_mark = "[L]"
+                else:
+                    stage_mark = "[N]"
+
+                # Format: [K] кіт (noun m) — cat
+                #         forms: кота, коти, коту
+                entry = f"{stage_mark} {lemma} ({pos}) — {translation}"
+                if forms:
+                    # Clean up "forms:" prefix if present
+                    forms = forms.replace("forms:", "").strip()
+                    if forms:
+                        entry += f"\n    └ {forms}"
+                lines.append(entry)
+
+        # Count stats based on lemmas in the analysis
+        known_count = sum(1 for line in lines if line.startswith("[K]"))
+        learning_count = sum(1 for line in lines if line.startswith("[L]"))
+        new_count = lemma_count - known_count - learning_count
+
+        header = f"Lemmas: {lemma_count} | Known: {known_count} | Learning: {learning_count} | New: {new_count}\n"
+        header += f"(from {len(words)} word forms in text)\n"
+        header += "─" * 55 + "\n\n"
+
+        return header + "\n".join(lines)
+
+    def _format_simple_vocab(self, words: list[str]) -> str:
+        """Format simple vocabulary list without AI analysis."""
+        known_words = self.vocabulary.get_known_words()
+        learning_words = self.vocabulary.get_learning_words()
+
+        lines = []
+        for word in words:
+            translation = self.lookup_translation(word)
+            trans_str = translation if translation else "?"
+
+            if word in known_words:
+                stage_mark = "[K]"
+            elif word in learning_words:
+                stage_mark = "[L]"
+            else:
+                stage_mark = "[N]"
+
+            lines.append(f"{stage_mark} {word} — {trans_str}")
+
+        known_count = sum(1 for w in words if w in known_words)
+        learning_count = sum(1 for w in words if w in learning_words)
+        new_count = len(words) - known_count - learning_count
+
+        header = f"Words: {len(words)} | Known: {known_count} | Learning: {learning_count} | New: {new_count}\n"
+        header += "(AI not configured - showing raw word forms)\n"
+        header += "─" * 50 + "\n\n"
+
+        return header + "\n".join(lines)
 
     def run(self):
         """Run the application."""
