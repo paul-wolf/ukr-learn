@@ -23,13 +23,13 @@ from src.ai.openai import OpenAIProvider
 from src.ai.generator import ContentGenerator
 from src.ui.theme import PALETTE
 from src.ui.widgets import TabBar, StatusBar
-from src.ui.screens import TextScreen, WordListScreen, GrammarScreen, QuizScreen, GenerateScreen
+from src.ui.screens import TextScreen, WordListScreen, GrammarScreen, QuizScreen, GenerateScreen, AlphabetScreen
 
 
 class App:
     """Main application class."""
 
-    TAB_NAMES = ["Texts", "Words", "Grammar", "Quiz", "Generate"]
+    TAB_NAMES = ["Texts", "Words", "Grammar", "Quiz", "Generate", "Alphabet"]
 
     def __init__(self, config_path: Optional[str] = None):
         # Load config
@@ -145,6 +145,7 @@ class App:
         self.grammar_screen = GrammarScreen(self)
         self.quiz_screen = QuizScreen(self)
         self.generate_screen = GenerateScreen(self)
+        self.alphabet_screen = AlphabetScreen(self)
 
         self.screens = [
             self.text_screen,
@@ -152,6 +153,7 @@ class App:
             self.grammar_screen,
             self.quiz_screen,
             self.generate_screen,
+            self.alphabet_screen,
         ]
 
         # Status bar
@@ -264,6 +266,13 @@ class App:
             ai_status = "AI: ready" if self.generator else "AI: not configured"
             self.status_bar.set_text(f"{base_status} | {ai_status} | [Enter]generate [q]uit")
 
+        elif current == self.alphabet_screen:
+            letter = self.alphabet_screen.get_current_letter()
+            if letter:
+                self.status_bar.set_text(f"Letter: {letter} | [p/P]ronounce | ↑/↓ navigate | [q]uit")
+            else:
+                self.status_bar.set_text("[p/P]ronounce | ↑/↓ navigate | [q]uit")
+
     def show_message(self, message: str):
         """Show a temporary message in the status bar."""
         self.status_bar.set_text(message)
@@ -279,7 +288,7 @@ class App:
             raise urwid.ExitMainLoop()
 
         # Number keys for tab switching
-        if key in "12345":
+        if key in "123456":
             self.switch_tab(int(key) - 1)
             return
 
@@ -300,7 +309,7 @@ class App:
 Ukrainian Language Learning App
 
 Navigation:
-  1-5, Tab    Switch between tabs
+  1-6, Tab    Switch between tabs
   ↑/↓         Navigate lists
   Enter       Select item
   q           Quit
@@ -326,6 +335,10 @@ Quiz:
   a           Again (keep/demote)
   n           Next word
 
+Alphabet:
+  p/P         Pronounce letter (P=slow)
+  ↑/↓         Navigate letters
+
 Press any key to close...
 """
         text = urwid.Text(help_text)
@@ -337,7 +350,7 @@ Press any key to close...
             align="center",
             width=60,
             valign="middle",
-            height=25,
+            height=28,
         )
 
         def close_help(key):

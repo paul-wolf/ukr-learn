@@ -6,6 +6,43 @@ from src.core.models import Text, WordList, GrammarNote, WordStage
 from src.core.tts import get_tts, TTSError
 from src.ui.widgets import ListBrowser, AnnotatedTextViewer
 
+# Ukrainian alphabet data: (upper, lower, name, pronunciation, examples, notes)
+UKRAINIAN_ALPHABET = [
+    ("А", "а", "а", "ah", "мама (mama), так (tak)", "Like 'a' in 'father'"),
+    ("Б", "б", "бе", "b", "батько (father), бути (to be)", "Like English 'b'"),
+    ("В", "в", "ве", "v", "вода (water), він (he)", "Like English 'v'"),
+    ("Г", "г", "ге", "h", "голова (head), говорити (to speak)", "Soft 'h', like breathing out"),
+    ("Ґ", "ґ", "ґе", "g", "ґанок (porch), ґудзик (button)", "Hard 'g' as in 'go' - rare letter"),
+    ("Д", "д", "де", "d", "дім (house), день (day)", "Like English 'd'"),
+    ("Е", "е", "е", "eh", "мене (me), себе (self)", "Like 'e' in 'bet'"),
+    ("Є", "є", "є", "yeh", "є (is), моє (my/mine)", "Like 'ye' in 'yes'"),
+    ("Ж", "ж", "же", "zh", "жінка (woman), життя (life)", "Like 's' in 'measure'"),
+    ("З", "з", "зе", "z", "земля (earth), знати (to know)", "Like English 'z'"),
+    ("И", "и", "и", "ih", "ти (you), син (son)", "Between 'i' and 'e', unique to Ukrainian"),
+    ("І", "і", "і", "ee", "він (he), місто (city)", "Like 'ee' in 'see'"),
+    ("Ї", "ї", "ї", "yee", "їжа (food), її (her)", "Like 'yee' in 'yeet'"),
+    ("Й", "й", "йот", "y", "йти (to go), мій (my)", "Like 'y' in 'boy'"),
+    ("К", "к", "ка", "k", "кіт (cat), коли (when)", "Like English 'k'"),
+    ("Л", "л", "ел", "l", "люди (people), лист (letter)", "Like English 'l'"),
+    ("М", "м", "ем", "m", "мати (mother), море (sea)", "Like English 'm'"),
+    ("Н", "н", "ен", "n", "ніч (night), нам (to us)", "Like English 'n'"),
+    ("О", "о", "о", "oh", "око (eye), один (one)", "Like 'o' in 'more'"),
+    ("П", "п", "пе", "p", "привіт (hello), писати (to write)", "Like English 'p'"),
+    ("Р", "р", "ер", "r", "рука (hand), робота (work)", "Rolled 'r', like Spanish"),
+    ("С", "с", "ес", "s", "світ (world), слово (word)", "Like English 's'"),
+    ("Т", "т", "те", "t", "так (yes), тут (here)", "Like English 't'"),
+    ("У", "у", "у", "oo", "ухо (ear), учень (student)", "Like 'oo' in 'moon'"),
+    ("Ф", "ф", "еф", "f", "фото (photo), фрукт (fruit)", "Like English 'f' - mostly in loanwords"),
+    ("Х", "х", "ха", "kh", "хліб (bread), ходити (to walk)", "Like 'ch' in Scottish 'loch'"),
+    ("Ц", "ц", "це", "ts", "центр (center), цікаво (interesting)", "Like 'ts' in 'cats'"),
+    ("Ч", "ч", "че", "ch", "час (time), читати (to read)", "Like 'ch' in 'church'"),
+    ("Ш", "ш", "ша", "sh", "школа (school), шукати (to search)", "Like 'sh' in 'ship'"),
+    ("Щ", "щ", "ща", "shch", "ще (still/yet), щастя (happiness)", "Like 'sh' + 'ch' combined"),
+    ("Ь", "ь", "м'який знак", "-", "день (day), сіль (salt)", "Soft sign - softens previous consonant"),
+    ("Ю", "ю", "ю", "yu", "юнак (youth), любов (love)", "Like 'yu' in 'youth'"),
+    ("Я", "я", "я", "ya", "я (I), яблуко (apple)", "Like 'ya' in 'yard'"),
+]
+
 
 class TextScreen(urwid.WidgetWrap):
     """Screen for viewing reading texts."""
@@ -793,3 +830,132 @@ class GenerateScreen(urwid.WidgetWrap):
             return None
 
         return super().keypress(size, key)
+
+
+class AlphabetEntry(urwid.WidgetWrap):
+    """A selectable alphabet entry widget."""
+
+    def __init__(self, index, upper, lower, name, phonetic, examples, notes):
+        self.index = index
+        self.letter = lower
+
+        # Create display content
+        line1 = urwid.Text([
+            ("bold", f"  {upper} {lower} "),
+            f"({name}) ",
+            ("highlight", f"/{phonetic}/"),
+            f" — {notes}",
+        ])
+        line2 = urwid.Text(f"     Examples: {examples}")
+
+        pile = urwid.Pile([line1, line2, urwid.Divider()])
+        widget = urwid.AttrMap(pile, None, focus_map="list_item_focus")
+        super().__init__(widget)
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        return key  # Pass through for ListBox navigation
+
+    def mouse_event(self, size, event, button, col, row, focus):
+        if event == "mouse press" and button == 1:
+            return True  # Consume click to select this entry
+        return False
+
+
+class AlphabetScreen(urwid.WidgetWrap):
+    """Screen for learning the Ukrainian alphabet."""
+
+    def __init__(self, app):
+        self.app = app
+        self.current_index = 0
+
+        # Build the alphabet display
+        self._build_content()
+
+        super().__init__(self.main_widget)
+
+    def _build_content(self):
+        """Build the alphabet content display."""
+        # Header
+        header_text = urwid.Text([
+            ("bold", "Ukrainian Alphabet (Українська абетка)\n"),
+            "33 letters • Use ↑/↓ or click to select • Press 'p' to hear pronunciation\n",
+            "─" * 70,
+        ], align="center")
+
+        # Build list of alphabet entries
+        self.letter_widgets = []
+        for i, (upper, lower, name, phonetic, examples, notes) in enumerate(UKRAINIAN_ALPHABET):
+            entry = AlphabetEntry(i, upper, lower, name, phonetic, examples, notes)
+            self.letter_widgets.append(entry)
+
+        # Create list walker and listbox
+        self.walker = urwid.SimpleFocusListWalker(self.letter_widgets)
+        self.listbox = urwid.ListBox(self.walker)
+
+        # Connect focus change to update
+        urwid.connect_signal(self.walker, 'modified', self._on_focus_change)
+
+        # Layout with header
+        self.main_widget = urwid.Frame(
+            header=urwid.Pile([header_text, urwid.Divider()]),
+            body=self.listbox,
+        )
+
+    def _on_focus_change(self):
+        """Handle focus change in the list."""
+        try:
+            self.current_index = self.walker.focus
+        except (TypeError, AttributeError):
+            pass
+
+    def get_current_letter(self) -> str | None:
+        """Get the currently focused letter."""
+        if 0 <= self.current_index < len(self.letter_widgets):
+            return self.letter_widgets[self.current_index].letter
+        return None
+
+    def keypress(self, size, key):
+        if key == "p":
+            # Pronounce the current letter
+            letter = self.get_current_letter()
+            if letter:
+                self._pronounce_letter(letter)
+            return None
+        elif key == "P":
+            # Pronounce slowly
+            letter = self.get_current_letter()
+            if letter:
+                self._pronounce_letter(letter, slow=True)
+            return None
+
+        return super().keypress(size, key)
+
+    def _pronounce_letter(self, letter: str, slow: bool = False):
+        """Pronounce a letter using TTS."""
+        try:
+            tts = get_tts()
+            if not tts.is_available():
+                self.app.show_message("TTS not available - install gTTS")
+                return
+
+            # Get the full entry for better pronunciation
+            for upper, lower, name, phonetic, examples, notes in UKRAINIAN_ALPHABET:
+                if lower == letter:
+                    # Pronounce: letter name, then an example word
+                    example_word = examples.split(",")[0].split("(")[0].strip()
+                    text = f"{name}. {example_word}"
+                    break
+            else:
+                text = letter
+
+            self.app.show_message(f"Pronouncing: {letter}")
+            if slow:
+                tts.speak_slow(text)
+            else:
+                tts.speak(text)
+
+        except TTSError as e:
+            self.app.show_message(f"TTS error: {e}")
